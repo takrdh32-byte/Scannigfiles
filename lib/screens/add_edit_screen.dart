@@ -3,7 +3,7 @@ import 'package:intl/intl.dart';
 import '../models/medicine.dart';
 import '../services/storage_service.dart';
 import '../services/notification_service.dart';
-import '../l10n/app_strings.dart';
+import '../locale.dart';                 // ✅ Changed
 import '../theme/app_theme.dart';
 
 class AddEditScreen extends StatefulWidget {
