@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../models/medicine.dart';
 import '../theme/app_theme.dart';
-import '../locale.dart';   // ✅ FIXED: pehle '../l10n/app_strings.dart' tha, ab '../locale.dart'
+import '../locale.dart';                 // ✅ Changed
 
 class MedicineCard extends StatelessWidget {
   final Medicine medicine;
