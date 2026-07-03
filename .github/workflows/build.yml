@@ -1,0 +1,68 @@
+name: Build DawaCheck APK
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.24.0'
+          channel: 'stable'
+
+      - name: Generate Android platform folder
+        run: |
+          if [ ! -d "android" ]; then
+            flutter create --platforms=android --org com.dawacheck --project-name dawa_check .
+          fi
+
+      - name: Add required Android permissions
+        run: |
+          MANIFEST="android/app/src/main/AndroidManifest.xml"
+          for PERM in \
+            'android.permission.CAMERA' \
+            'android.permission.INTERNET' \
+            'android.permission.POST_NOTIFICATIONS' \
+            'android.permission.SCHEDULE_EXACT_ALARM' \
+            'android.permission.RECEIVE_BOOT_COMPLETED'
+          do
+            if ! grep -q "$PERM" "$MANIFEST"; then
+              sed -i "s#<manifest #<manifest #" "$MANIFEST"
+              sed -i "0,/<application/s##<uses-permission android:name=\"$PERM\" \/>\n    <application#" "$MANIFEST"
+            fi
+          done
+          cat "$MANIFEST"
+
+      - name: Set minSdkVersion for ML Kit / camera
+        run: |
+          GRADLE="android/app/build.gradle"
+          if [ -f "$GRADLE" ]; then
+            sed -i 's/minSdkVersion flutter.minSdkVersion/minSdkVersion 21/' "$GRADLE" || true
+            sed -i 's/minSdk = flutter.minSdkVersion/minSdk = 21/' "$GRADLE" || true
+          fi
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Build APK
+        run: flutter build apk --release
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: dawa-check-apk
+          path: build/app/outputs/flutter-apk/app-release.apk
