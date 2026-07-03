@@ -2,7 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import '../services/ocr_service.dart';
-import '../l10n/app_strings.dart';
+import '../locale.dart';                 // ✅ Changed
 import '../theme/app_theme.dart';
 import 'add_edit_screen.dart';
 
