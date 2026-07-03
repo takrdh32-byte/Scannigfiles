@@ -30,6 +30,21 @@ jobs:
             flutter create --platforms=android --org com.dawacheck --project-name dawa_check .
           fi
 
+      - name: Fix Android build config (compileSdk, Kotlin, minSdk)
+        run: |
+          # Set compileSdk to 35
+          sed -i 's/compileSdk = 34/compileSdk = 35/g' android/app/build.gradle
+          sed -i 's/compileSdkVersion 34/compileSdkVersion 35/g' android/app/build.gradle
+          # Set minSdk to 21 if not already
+          sed -i 's/minSdkVersion flutter.minSdkVersion/minSdkVersion 21/g' android/app/build.gradle
+          sed -i 's/minSdk = flutter.minSdkVersion/minSdk = 21/g' android/app/build.gradle
+          # Update Kotlin version to 1.9.0 in project build.gradle
+          sed -i 's/ext.kotlin_version = .*/ext.kotlin_version = "1.9.0"/g' android/build.gradle
+          # If not present, add it
+          grep -q "ext.kotlin_version" android/build.gradle || sed -i '1i ext.kotlin_version = "1.9.0"' android/build.gradle
+          # Set Kotlin JVM target to 17
+          echo 'android { kotlinOptions { jvmTarget = "17" } }' >> android/app/build.gradle
+
       - name: Add required Android permissions
         run: |
           MANIFEST="android/app/src/main/AndroidManifest.xml"
@@ -41,19 +56,10 @@ jobs:
             'android.permission.RECEIVE_BOOT_COMPLETED'
           do
             if ! grep -q "$PERM" "$MANIFEST"; then
-              sed -i "s#<manifest #<manifest #" "$MANIFEST"
               sed -i "0,/<application/s##<uses-permission android:name=\"$PERM\" \/>\n    <application#" "$MANIFEST"
             fi
           done
           cat "$MANIFEST"
-
-      - name: Set minSdkVersion for ML Kit / camera
-        run: |
-          GRADLE="android/app/build.gradle"
-          if [ -f "$GRADLE" ]; then
-            sed -i 's/minSdkVersion flutter.minSdkVersion/minSdkVersion 21/' "$GRADLE" || true
-            sed -i 's/minSdk = flutter.minSdkVersion/minSdk = 21/' "$GRADLE" || true
-          fi
 
       - name: Install dependencies
         run: flutter pub get
