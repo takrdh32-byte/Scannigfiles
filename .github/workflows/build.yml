@@ -30,18 +30,24 @@ jobs:
             flutter create --platforms=android --org com.dawacheck --project-name dawa_check .
           fi
 
-      - name: Fix build.gradle (compileSdk, minSdk, Kotlin version)
+      - name: Create assets folder if missing
         run: |
-          # android/app/build.gradle: compileSdk 35, minSdk 21
-          sed -i 's/compileSdk = 34/compileSdk = 35/g' android/app/build.gradle
-          sed -i 's/compileSdkVersion 34/compileSdkVersion 35/g' android/app/build.gradle
+          mkdir -p assets
+
+      - name: Fix build.gradle (compileSdk 34, minSdk 21, Kotlin 1.9.24)
+        run: |
+          # android/app/build.gradle: compileSdk 34 (stable), minSdk 21
+          sed -i 's/compileSdk = 35/compileSdk = 34/g' android/app/build.gradle
+          sed -i 's/compileSdkVersion 35/compileSdkVersion 34/g' android/app/build.gradle
           sed -i 's/minSdkVersion flutter.minSdkVersion/minSdkVersion 21/g' android/app/build.gradle
           sed -i 's/minSdk = flutter.minSdkVersion/minSdk = 21/g' android/app/build.gradle
 
-          # android/build.gradle: set kotlin_version to 1.9.0
-          sed -i 's/ext.kotlin_version = .*/ext.kotlin_version = "1.9.0"/g' android/build.gradle
-          # If not present, add it after buildscript { 
-          grep -q "ext.kotlin_version" android/build.gradle || sed -i '/buildscript {/a\    ext.kotlin_version = "1.9.0"' android/build.gradle
+          # android/build.gradle: Kotlin version set to 1.9.24
+          sed -i 's/ext.kotlin_version = .*/ext.kotlin_version = "1.9.24"/g' android/build.gradle
+          grep -q "ext.kotlin_version" android/build.gradle || sed -i '/buildscript {/a\    ext.kotlin_version = "1.9.24"' android/build.gradle
+
+          # Also update Kotlin plugin version in build.gradle dependencies
+          sed -i 's/classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:.*"/classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"/g' android/build.gradle
 
       - name: Add required Android permissions
         run: |
