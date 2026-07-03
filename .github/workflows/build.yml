@@ -30,20 +30,33 @@ jobs:
             flutter create --platforms=android --org com.dawacheck --project-name dawa_check .
           fi
 
-      - name: Fix Android build config (compileSdk, Kotlin, minSdk)
+      - name: Fix build.gradle (compileSdk, minSdk, Kotlin)
         run: |
-          # Set compileSdk to 35
-          sed -i 's/compileSdk = 34/compileSdk = 35/g' android/app/build.gradle
-          sed -i 's/compileSdkVersion 34/compileSdkVersion 35/g' android/app/build.gradle
-          # Set minSdk to 21 if not already
-          sed -i 's/minSdkVersion flutter.minSdkVersion/minSdkVersion 21/g' android/app/build.gradle
-          sed -i 's/minSdk = flutter.minSdkVersion/minSdk = 21/g' android/app/build.gradle
-          # Update Kotlin version to 1.9.0 in project build.gradle
-          sed -i 's/ext.kotlin_version = .*/ext.kotlin_version = "1.9.0"/g' android/build.gradle
-          # If not present, add it
-          grep -q "ext.kotlin_version" android/build.gradle || sed -i '1i ext.kotlin_version = "1.9.0"' android/build.gradle
-          # Set Kotlin JVM target to 17
-          echo 'android { kotlinOptions { jvmTarget = "17" } }' >> android/app/build.gradle
+          # android/app/build.gradle
+          APP_GRADLE="android/app/build.gradle"
+          # compileSdk 35
+          sed -i 's/compileSdk = 34/compileSdk = 35/g' $APP_GRADLE
+          sed -i 's/compileSdkVersion 34/compileSdkVersion 35/g' $APP_GRADLE
+          # minSdk 21
+          sed -i 's/minSdkVersion flutter.minSdkVersion/minSdkVersion 21/g' $APP_GRADLE
+          sed -i 's/minSdk = flutter.minSdkVersion/minSdk = 21/g' $APP_GRADLE
+          # Kotlin JVM target
+          echo '    kotlinOptions { jvmTarget = "17" }' >> $APP_GRADLE
+
+          # android/build.gradle
+          ROOT_GRADLE="android/build.gradle"
+          # Set Kotlin version to 1.9.0
+          if grep -q "ext.kotlin_version" $ROOT_GRADLE; then
+            sed -i 's/ext.kotlin_version = .*/ext.kotlin_version = "1.9.0"/g' $ROOT_GRADLE
+          else
+            sed -i '1i ext.kotlin_version = "1.9.0"' $ROOT_GRADLE
+          fi
+
+          # Also update settings.gradle if needed (plugins block)
+          SETTINGS="android/settings.gradle"
+          if [ -f "$SETTINGS" ]; then
+            sed -i 's/id "org.jetbrains.kotlin.android" version .*/id "org.jetbrains.kotlin.android" version "1.9.0"/g' $SETTINGS
+          fi
 
       - name: Add required Android permissions
         run: |
@@ -59,7 +72,6 @@ jobs:
               sed -i "0,/<application/s##<uses-permission android:name=\"$PERM\" \/>\n    <application#" "$MANIFEST"
             fi
           done
-          cat "$MANIFEST"
 
       - name: Install dependencies
         run: flutter pub get
