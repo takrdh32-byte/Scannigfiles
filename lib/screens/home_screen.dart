@@ -3,7 +3,7 @@ import '../models/medicine.dart';
 import '../services/storage_service.dart';
 import '../services/notification_service.dart';
 import '../widgets/medicine_card.dart';
-import '../l10n/app_strings.dart';
+import '../locale.dart';                 // ✅ Changed
 import '../theme/app_theme.dart';
 import 'scan_screen.dart';
 import 'add_edit_screen.dart';
